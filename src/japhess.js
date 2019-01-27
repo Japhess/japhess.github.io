@@ -14,6 +14,9 @@ var cell_width;
 var piece_height;
 var piece_width;
 var selected_piece;
+var stand_by_second_side;
+var stand_by_first_side;
+var first_move;
 
 function adjustHeight(table, height){
     for(var i = 0; i < table.rows.length; i++){
@@ -123,18 +126,80 @@ function initializeBoard(){
     board[8][6] = new Piece(true, "fu", false);
 }
 
-function selectPiece(){
+function movePiece(src_row, src_col, dest_row, dest_col){
+    var dest = board[dest_row][dest_col];
+    if(dest == null){
+        board[dest_row][dest_col] = board[src_row][src_col];
+    } else {
+        if(first_move){
+            if(board[dest_row][dest_col].first){
+                return false;
+            }
+
+            stand_by_first_side.push(board[dest_row][dest_col]);
+            board[dest_row][dest_col] = board[src_row][src_col];
+        } else {
+            if(!board[dest_row][dest_col].first){
+                return false;
+            }
+
+            stand_by_second_side.push(board[dest_row][dest_col]);
+            board[dest_row][dest_col] = board[src_row][src_col];
+        }
+    }
+
+    first_move = !first_move
+    board[src_row][src_col] = null;
+    return true;
+}
+
+function clickPiece(){
+    var click_own_piece = pieceFromId(this.parentNode.id).first == first_move;
     if(selected_piece == this.parentNode.id){
         selected_piece = "";
         this.parentNode.bgColor = "";
         this.height = piece_height;
-    } else if(selected_piece == ""){
+    } else if(selected_piece == "" && click_own_piece){
         selected_piece = this.parentNode.id;
         this.parentNode.bgColor = "#EF9500";
         this.height = piece_height * 1.1;
+    } else if(selected_piece == "" && !click_own_piece){
+        // message
+    } else if(click_own_piece){
+        var previous = document.getElementById(selected_piece);
+        previous.bgColor = "";
+        previous.firstChild.height = piece_height;
+        selected_piece = "";
     } else {
-        var previous_select = document.getElementById(selected_piece);
-        previous_select.firstChild.click();
+        moveCell(selected_piece, this.parentNode.id);
+    }
+}
+
+function pieceFromId(id){
+    var splits = id.split("-");
+    var row = Number(splits[0]) - 1;
+    var col = Number(splits[1]) - 1;
+    return board[row][col];
+}
+
+function moveCell(src_id, dest_id){
+    var src_splits = src_id.split("-");
+    var dest_splits = dest_id.split("-");
+    var src_row = Number(src_splits[0]);
+    var src_col = Number(src_splits[1]);
+    var dest_row = Number(dest_splits[0]);
+    var dest_col = Number(dest_splits[1]);
+    var success = movePiece(src_row - 1, src_col - 1, dest_row - 1, dest_col - 1);
+    if(success){
+        drawPiece(src_row, src_col);
+        drawPiece(dest_row, dest_col);
+    }
+    selected_piece = ""
+}
+
+function clickEmptyCell(){
+    if(selected_piece != ""){
+        moveCell(selected_piece, this.id);
     }
 }
 
@@ -144,26 +209,44 @@ function removeAllChildlen(node){
     }
 }
 
-function draw(table){
+function drawPiece(x, y){
+    var piece = board[x - 1][y - 1];
+    var cell = document.getElementById(x + "-" + y);
+    if(cell.childNodes.length > 0){
+        removeAllChildlen(cell);
+    }
+    if(piece == null){
+        addClickEventOnEmptyCell(x, y);
+    } else {
+        var img = document.createElement('img');
+        if(piece.first){
+            img.src = imgs[piece.type].first;
+        } else {
+            img.src = imgs[piece.type].second;
+        }
+
+        img.height = piece_height;
+        img.width = piece_width;
+        img.addEventListener("click", clickPiece);
+
+        cell.appendChild(img);
+        cell.removeEventListener("click", clickEmptyCell);
+    }
+    cell.bgColor = "";
+}
+
+function addClickEventOnEmptyCell(x, y){
+    var cell = document.getElementById(String(x) + "-" + String(y));
+    cell.addEventListener("click", clickEmptyCell);
+}
+
+function draw(){
     for(var i = 1; i < 10; i++){
         for(var j = 1; j < 10; j++){
-            var piece = board[i - 1][j - 1];
-            var cell = document.getElementById(i + "-" + j);
-            if(piece == null){
-                removeAllChildlen(cell);
+            if(board[i - 1][j - 1] == null){
+                addClickEventOnEmptyCell(i, j);
             } else {
-                var img = document.createElement('img');
-                if(piece.first){
-                    img.src = imgs[piece.type].first;
-                } else {
-                    img.src = imgs[piece.type].second;
-                }
-
-                img.height = piece_height;
-                img.width = piece_width;
-                img.addEventListener("click", selectPiece);
-
-                cell.appendChild(img);
+                drawPiece(i, j);
             }
         }
     }
@@ -171,9 +254,12 @@ function draw(table){
 
 function startGame(table){
     selected_piece = "";
+    stand_by_first_side = [];
+    stand_by_second_side = [];
     resetBoard();
     initializeBoard();
-    draw(table);
+    draw();
+    first_move = true;
 }
 
 
