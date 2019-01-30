@@ -1,14 +1,4 @@
-
 var board;
-var imgs = { fu: { first: "./img/Sfu.png", second: "./img/Gfu.png" },
-             hi: { first: "./img/Shi.png", second: "./img/Ghi.png" },
-             kaku: { first: "./img/Skaku.png", second: "./img/Gkaku.png" },
-             kyo: { first: "./img/Skyo.png", second: "./img/Gkyo.png" },
-             kei: { first: "./img/Skei.png", second: "./img/Gkei.png" },
-             gin: { first: "./img/Sgin.png", second: "./img/Ggin.png" },
-             kin: { first: "./img/Skin.png", second: "./img/Gkin.png" },
-             ou: { first: "./img/Sou.png", second: "./img/Gou.png" }
-           };
 var cell_height;
 var cell_width;
 var piece_height;
@@ -17,6 +7,10 @@ var selected_piece;
 var stand_by_second_side;
 var stand_by_first_side;
 var first_move;
+
+var comparePiece = function(p1, p2){
+    return p1.order > p2.order;
+};
 
 function adjustHeight(table, height){
     for(var i = 0; i < table.rows.length; i++){
@@ -40,13 +34,21 @@ function arrangePieces(table){
 }
 
 function setSize(table){
-    let screen_width = document.documentElement.clientWidth;
-    let table_width = (document.documentElement.clientHeight) * 3 / 4;
+    let aspect = screen.height / screen.width;
+    var table_height;
+    var table_width;
+    if(aspect < 1.34){
+        table_height = document.documentElement.clientHeight - 100;
+        table_width = table_height * 3 / 4;
+    } else {
+        table_width = document.documentElement.clientWidth - 100;
+        table_height = table_height * 4 / 3;
+    }
     table.width = table_width;
-    cell_width = (table_width - 120) / 9;
-    cell_height = (table_width * 4 / 3 - 200) / 9;
+    cell_width = table_width / 9;
+    cell_height = table_height / 11;
     piece_height = cell_height - 10;
-    piece_width = piece_height * 43 / 48;
+    piece_width = piece_height - 10;
 }
 
 function initialize(){
@@ -57,21 +59,14 @@ function initialize(){
 }
 
 function resetBoard(){
+    var div = document.getElementById(stand_by_first_id);
+    div.style.height = cell_height + 'px';
+    var div = document.getElementById(stand_by_second_id);
+    div.style.height = cell_height + 'px';
+
     board = new Array(9);
     for(let y = 0; y < 9; y++) {
         board[y] = new Array(9).fill(null);
-    }
-}
-
-class Piece {
-    constructor(first, type, promoted) {
-        this.first = first;
-        this.type = type;
-        this.promoted = promoted;
-    }
-
-    promote() {
-        this.promoted = true;
     }
 }
 
@@ -136,65 +131,166 @@ function movePiece(src_row, src_col, dest_row, dest_col){
                 return false;
             }
 
-            stand_by_first_side.push(board[dest_row][dest_col]);
+            dest.img = imgs[dest.type].first;
+            stand_by_first_side.push(dest);
             board[dest_row][dest_col] = board[src_row][src_col];
         } else {
             if(!board[dest_row][dest_col].first){
                 return false;
             }
 
-            stand_by_second_side.push(board[dest_row][dest_col]);
+            dest.img = imgs[dest.type].second;
+            stand_by_second_side.push(dest);
             board[dest_row][dest_col] = board[src_row][src_col];
         }
     }
 
-    first_move = !first_move
     board[src_row][src_col] = null;
     return true;
 }
 
+function movePieceFromStandBy(src_index, dest_row, dest_col){
+    var dest = board[dest_row][dest_col];
+    if(dest == null){
+        if(first_move){
+            board[dest_row][dest_col] = stand_by_first_side[src_index];
+            stand_by_first_side.splice(src_index, 1);
+        } else {
+            board[dest_row][dest_col] = stand_by_second_side[src_index];
+            stand_by_second_side.splice(src_index, 1);
+        }
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
+function indexOfPiece(parentNode, img){
+    for(var i = 0; i < parentNode.childNodes.length; i++){
+        if(parentNode.childNodes[i] === img){
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+function position(elem){
+    var par = elem.parentNode;
+    switch(par.id){
+        case stand_by_first_id:
+            return "first-" + indexOfPiece(par, elem);
+        case stand_by_second_id:
+            return "second-" + indexOfPiece(par, elem);
+        default:
+            return elem.parentNode.id;
+    }
+}
+
 function clickPiece(){
-    var click_own_piece = pieceFromId(this.parentNode.id).first == first_move;
+    var click_own_piece = pieceDirectionFromId(this.parentNode.id) == first_move;
     if(selected_piece == this.parentNode.id){
         selected_piece = "";
         this.parentNode.bgColor = "";
         this.height = piece_height;
     } else if(selected_piece == "" && click_own_piece){
-        selected_piece = this.parentNode.id;
+        selected_piece = position(this);
         this.parentNode.bgColor = "#EF9500";
         this.height = piece_height * 1.1;
     } else if(selected_piece == "" && !click_own_piece){
         // message
     } else if(click_own_piece){
-        var previous = document.getElementById(selected_piece);
-        previous.bgColor = "";
-        previous.firstChild.height = piece_height;
+        var position_splits = seleted_piece.split("-");
+        switch(position_splits[0]){
+            case "first":
+                var index = position_splits[1];
+                var div = document.getElementById(stand_by_first_id);
+                div.childNodes[Number(index)].height = piece_height;
+            case "second":
+                var index = position_splits[1];
+                var div = document.getElementById(stand_by_second_id);
+                div.childNodes[Number(index)].height = piece_height;
+            default:
+                var previous = document.getElementById(selected_piece);
+                previous.bgColor = "";
+                previous.firstChild.height = piece_height;
+        }
+            
         selected_piece = "";
     } else {
         moveCell(selected_piece, this.parentNode.id);
     }
 }
 
-function pieceFromId(id){
-    var splits = id.split("-");
-    var row = Number(splits[0]) - 1;
-    var col = Number(splits[1]) - 1;
-    return board[row][col];
+function pieceDirectionFromId(id){
+    switch(id){
+        case stand_by_first_id:
+            return true;
+        case stand_by_second_id:
+            return false;
+        default:
+            var splits = id.split("-");
+            var row = Number(splits[0]) - 1;
+            var col = Number(splits[1]) - 1;
+            return board[row][col].first;
+    }
 }
 
 function moveCell(src_id, dest_id){
     var src_splits = src_id.split("-");
     var dest_splits = dest_id.split("-");
-    var src_row = Number(src_splits[0]);
-    var src_col = Number(src_splits[1]);
-    var dest_row = Number(dest_splits[0]);
-    var dest_col = Number(dest_splits[1]);
-    var success = movePiece(src_row - 1, src_col - 1, dest_row - 1, dest_col - 1);
-    if(success){
-        drawPiece(src_row, src_col);
-        drawPiece(dest_row, dest_col);
+    switch(src_splits[0]){
+        case "first":
+        case "second":
+            var src_index = Number(src_splits[1]);
+            var [dest_row, dest_col] = dest_splits.map(Number);
+            var success = movePieceFromStandBy(src_index, dest_row - 1, dest_col - 1);
+            if(success){
+                drawPiece(dest_row, dest_col);
+                if(first_move){
+                    let id = stand_by_first_id;
+                    drawStandBy(id, stand_by_first_side);
+                } else {
+                    let id = stand_by_second_id;
+                    drawStandBy(id, stand_by_second_side);
+                }
+                first_move = !first_move
+            }
+            break;
+        default:
+            var [src_row, src_col] = src_splits.map(Number);
+            var [dest_row, dest_col] = dest_splits.map(Number);
+            var success = movePiece(src_row - 1, src_col - 1, dest_row - 1, dest_col - 1);
+            if(success){
+                drawPiece(src_row, src_col);
+                drawPiece(dest_row, dest_col);
+                if(first_move){
+                    let id = stand_by_first_id;
+                    stand_by_first_side.sort(comparePiece);
+                    drawStandBy(id, stand_by_first_side);
+                } else {
+                    let id = stand_by_second_id;
+                    stand_by_first_side.sort(comparePiece);
+                    drawStandBy(id, stand_by_second_side);
+                }
+                first_move = !first_move
+            }
     }
     selected_piece = ""
+}
+
+function drawStandBy(id, stand_by_array){
+    var div = document.getElementById(id);
+    removeAllChildlen(div);
+    stand_by_array.forEach(function(p){
+        var img = document.createElement('img');
+        img.src = p.img;
+        img.height = piece_height;
+        img.width = piece_width;
+        img.addEventListener("click", clickPiece);
+        div.appendChild(img);
+    });
 }
 
 function clickEmptyCell(){
@@ -219,11 +315,7 @@ function drawPiece(x, y){
         addClickEventOnEmptyCell(x, y);
     } else {
         var img = document.createElement('img');
-        if(piece.first){
-            img.src = imgs[piece.type].first;
-        } else {
-            img.src = imgs[piece.type].second;
-        }
+        img.src = piece.img;
 
         img.height = piece_height;
         img.width = piece_width;
