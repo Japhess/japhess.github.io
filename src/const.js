@@ -1,4 +1,4 @@
-var imgs = { fu: { first: "./img/Sfu.png", second: "./img/Gfu.png", order: 1 },
+let imgs = { fu: { first: "./img/Sfu.png", second: "./img/Gfu.png", order: 1 },
              hi: { first: "./img/Shi.png", second: "./img/Ghi.png", order: 7 },
              kaku: { first: "./img/Skaku.png", second: "./img/Gkaku.png", order: 6 },
              kyo: { first: "./img/Skyo.png", second: "./img/Gkyo.png", order: 2 },
