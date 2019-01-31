@@ -141,19 +141,26 @@ function movePiece(src_row, src_col, dest_row, dest_col){
             }
 
             dest.img = piece_info[dest.type].img.first;
+            dest.promoted = false;
             stand_by_first_side.push(dest);
             if(dest_col < 3){
                 board[dest_row][dest_col] = movedPiece(board[src_row][src_col]);
+            } else {
+                board[dest_row][dest_col] = board[src_row][src_col];
             }
+
         } else {
             if(!board[dest_row][dest_col].first){
                 return false;
             }
 
             dest.img = piece_info[dest.type].img.second;
+            dest.promoted = false;
             stand_by_second_side.push(dest);
             if(dest_col > 5){
                 board[dest_row][dest_col] = movedPiece(board[src_row][src_col]);
+            } else {
+                board[dest_row][dest_col] = board[src_row][src_col];
             }
         }
     }
