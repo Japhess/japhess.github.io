@@ -9,7 +9,7 @@ var stand_by_first_side;
 var first_move;
 
 var comparePiece = function(p1, p2){
-    return p1.order > p2.order;
+    return piece_info[p2.type].order - piece_info[p1.type].order;
 };
 
 function adjustHeight(table){
@@ -121,6 +121,15 @@ function initializeBoard(){
     board[8][6] = new Piece(true, "fu", false);
 }
 
+function movedPiece(piece){
+    var promote = window.confirm("成りますか？");
+    if(promote){
+        return piece.promote();
+    } else {
+        return piece;
+    }
+}
+
 function movePiece(src_row, src_col, dest_row, dest_col){
     var dest = board[dest_row][dest_col];
     if(dest == null){
@@ -131,17 +140,21 @@ function movePiece(src_row, src_col, dest_row, dest_col){
                 return false;
             }
 
-            dest.img = imgs[dest.type].first;
+            dest.img = piece_info[dest.type].img.first;
             stand_by_first_side.push(dest);
-            board[dest_row][dest_col] = board[src_row][src_col];
+            if(dest_col < 3){
+                board[dest_row][dest_col] = movedPiece(board[src_row][src_col]);
+            }
         } else {
             if(!board[dest_row][dest_col].first){
                 return false;
             }
 
-            dest.img = imgs[dest.type].second;
+            dest.img = piece_info[dest.type].img.second;
             stand_by_second_side.push(dest);
-            board[dest_row][dest_col] = board[src_row][src_col];
+            if(dest_col > 5){
+                board[dest_row][dest_col] = movedPiece(board[src_row][src_col]);
+            }
         }
     }
 
@@ -271,7 +284,7 @@ function moveCell(src_id, dest_id){
                     drawStandBy(id, stand_by_first_side);
                 } else {
                     let id = stand_by_second_id;
-                    stand_by_first_side.sort(comparePiece);
+                    stand_by_second_side.sort(comparePiece);
                     drawStandBy(id, stand_by_second_side);
                 }
                 first_move = !first_move
