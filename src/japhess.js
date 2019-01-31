@@ -12,9 +12,9 @@ var comparePiece = function(p1, p2){
     return p1.order > p2.order;
 };
 
-function adjustHeight(table, height){
+function adjustHeight(table){
     for(var i = 0; i < table.rows.length; i++){
-        table.rows[i].cells[0].height = height;
+        table.rows[i].cells[0].height = cell_height;
     }
 }
 
@@ -38,11 +38,11 @@ function setSize(table){
     var table_height;
     var table_width;
     if(aspect < 1.34){
-        table_height = document.documentElement.clientHeight - 100;
+        table_height = document.documentElement.clientHeight - 30;
         table_width = table_height * 3 / 4;
     } else {
-        table_width = document.documentElement.clientWidth - 100;
-        table_height = table_height * 4 / 3;
+        table_width = document.documentElement.clientWidth - 30;
+        table_height = table_width * 4 / 3;
     }
     table.width = table_width;
     cell_width = table_width / 9;
@@ -54,7 +54,7 @@ function setSize(table){
 function initialize(){
     var table = document.getElementById("japhess_board");
     setSize(table);
-    adjustHeight(table, cell_height);
+    adjustHeight(table);
     startGame(table);
 }
 
