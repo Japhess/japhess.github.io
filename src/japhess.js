@@ -1,12 +1,8 @@
-var board;
 var cell_height;
 var cell_width;
 var piece_height;
 var piece_width;
 var selected_piece;
-var stand_by_second_side;
-var stand_by_first_side;
-var first_move;
 
 var comparePiece = function(p1, p2){
     return piece_info[p2.type].order - piece_info[p1.type].order;
@@ -16,10 +12,6 @@ function adjustHeight(table){
     for(var i = 0; i < table.rows.length; i++){
         table.rows[i].cells[0].height = cell_height;
     }
-}
-
-function setPiece(table, row, col, img, width, height){
-    table.rows[row - 1].cells[col - 1].img
 }
 
 function removePiece(table, row, col){
@@ -51,139 +43,19 @@ function setSize(table){
     piece_width = piece_height - 10;
 }
 
+function adjustHeightOfStandByArea(){
+    var div = document.getElementById(stand_by_id.first);
+    div.style.height = cell_height + 'px';
+    var div = document.getElementById(stand_by_id.second);
+    div.style.height = cell_height + 'px';
+}
+
 function initialize(){
     var table = document.getElementById("japhess_board");
     setSize(table);
     adjustHeight(table);
+    adjustHeightOfStandByArea();
     startGame(table);
-}
-
-function resetBoard(){
-    var div = document.getElementById(stand_by_first_id);
-    div.style.height = cell_height + 'px';
-    var div = document.getElementById(stand_by_second_id);
-    div.style.height = cell_height + 'px';
-
-    board = new Array(9);
-    for(let y = 0; y < 9; y++) {
-        board[y] = new Array(9).fill(null);
-    }
-}
-
-function initializeBoard(){
-    board[0][0] = new Piece(false, "kyo", false);
-    board[8][0] = new Piece(false, "kyo", false);
-    board[0][8] = new Piece(true, "kyo", false);
-    board[8][8] = new Piece(true, "kyo", false);
-
-    board[1][0] = new Piece(false, "kei", false);
-    board[7][0] = new Piece(false, "kei", false);
-    board[1][8] = new Piece(true, "kei", false);
-    board[7][8] = new Piece(true, "kei", false);
-
-    board[2][0] = new Piece(false, "gin", false);
-    board[6][0] = new Piece(false, "gin", false);
-    board[2][8] = new Piece(true, "gin", false);
-    board[6][8] = new Piece(true, "gin", false);
-
-    board[3][0] = new Piece(false, "kin", false);
-    board[5][0] = new Piece(false, "kin", false);
-    board[3][8] = new Piece(true, "kin", false);
-    board[5][8] = new Piece(true, "kin", false);
-
-    board[4][0] = new Piece(false, "ou", false);
-    board[4][8] = new Piece(true, "ou", false);
-
-    board[1][1] = new Piece(false, "kaku", false);
-    board[7][7] = new Piece(true, "kaku", false);
-
-    board[7][1] = new Piece(false, "hi", false);
-    board[1][7] = new Piece(true, "hi", false);
-
-    board[0][2] = new Piece(false, "fu", false);
-    board[1][2] = new Piece(false, "fu", false);
-    board[2][2] = new Piece(false, "fu", false);
-    board[3][2] = new Piece(false, "fu", false);
-    board[4][2] = new Piece(false, "fu", false);
-    board[5][2] = new Piece(false, "fu", false);
-    board[6][2] = new Piece(false, "fu", false);
-    board[7][2] = new Piece(false, "fu", false);
-    board[8][2] = new Piece(false, "fu", false);
-
-    board[0][6] = new Piece(true, "fu", false);
-    board[1][6] = new Piece(true, "fu", false);
-    board[2][6] = new Piece(true, "fu", false);
-    board[3][6] = new Piece(true, "fu", false);
-    board[4][6] = new Piece(true, "fu", false);
-    board[5][6] = new Piece(true, "fu", false);
-    board[6][6] = new Piece(true, "fu", false);
-    board[7][6] = new Piece(true, "fu", false);
-    board[8][6] = new Piece(true, "fu", false);
-}
-
-function movedPiece(piece){
-    var promote = window.confirm("成りますか？");
-    if(promote){
-        return piece.promote();
-    } else {
-        return piece;
-    }
-}
-
-function movePiece(src_row, src_col, dest_row, dest_col){
-    var dest = board[dest_row][dest_col];
-    if(dest == null){
-        board[dest_row][dest_col] = board[src_row][src_col];
-    } else {
-        if(first_move){
-            if(board[dest_row][dest_col].first){
-                return false;
-            }
-
-            dest.img = piece_info[dest.type].img.first;
-            dest.promoted = false;
-            stand_by_first_side.push(dest);
-            if(dest_col < 3){
-                board[dest_row][dest_col] = movedPiece(board[src_row][src_col]);
-            } else {
-                board[dest_row][dest_col] = board[src_row][src_col];
-            }
-
-        } else {
-            if(!board[dest_row][dest_col].first){
-                return false;
-            }
-
-            dest.img = piece_info[dest.type].img.second;
-            dest.promoted = false;
-            stand_by_second_side.push(dest);
-            if(dest_col > 5){
-                board[dest_row][dest_col] = movedPiece(board[src_row][src_col]);
-            } else {
-                board[dest_row][dest_col] = board[src_row][src_col];
-            }
-        }
-    }
-
-    board[src_row][src_col] = null;
-    return true;
-}
-
-function movePieceFromStandBy(src_index, dest_row, dest_col){
-    var dest = board[dest_row][dest_col];
-    if(dest == null){
-        if(first_move){
-            board[dest_row][dest_col] = stand_by_first_side[src_index];
-            stand_by_first_side.splice(src_index, 1);
-        } else {
-            board[dest_row][dest_col] = stand_by_second_side[src_index];
-            stand_by_second_side.splice(src_index, 1);
-        }
-    } else {
-        return false;
-    }
-
-    return true;
 }
 
 function indexOfPiece(parentNode, img){
@@ -199,9 +71,9 @@ function indexOfPiece(parentNode, img){
 function position(elem){
     var par = elem.parentNode;
     switch(par.id){
-        case stand_by_first_id:
+        case stand_by_id.first:
             return "first-" + indexOfPiece(par, elem);
-        case stand_by_second_id:
+        case stand_by_id.second:
             return "second-" + indexOfPiece(par, elem);
         default:
             return elem.parentNode.id;
@@ -209,7 +81,7 @@ function position(elem){
 }
 
 function clickPiece(){
-    var click_own_piece = pieceDirectionFromId(this.parentNode.id) == first_move;
+    var click_own_piece = pieceDirectionFromId(this.parentNode.id) == current_move;
     if(selected_piece == this.parentNode.id){
         selected_piece = "";
         this.parentNode.bgColor = "";
@@ -224,12 +96,9 @@ function clickPiece(){
         var position_splits = seleted_piece.split("-");
         switch(position_splits[0]){
             case "first":
-                var index = position_splits[1];
-                var div = document.getElementById(stand_by_first_id);
-                div.childNodes[Number(index)].height = piece_height;
             case "second":
                 var index = position_splits[1];
-                var div = document.getElementById(stand_by_second_id);
+                var div = document.getElementById(stand_by_id[current_move]);
                 div.childNodes[Number(index)].height = piece_height;
             default:
                 var previous = document.getElementById(selected_piece);
@@ -245,15 +114,15 @@ function clickPiece(){
 
 function pieceDirectionFromId(id){
     switch(id){
-        case stand_by_first_id:
-            return true;
-        case stand_by_second_id:
-            return false;
+        case stand_by_id.first:
+            return "first";
+        case stand_by_id.second:
+            return "second";
         default:
             var splits = id.split("-");
             var row = Number(splits[0]) - 1;
             var col = Number(splits[1]) - 1;
-            return board[row][col].first;
+            return board[row][col].side;
     }
 }
 
@@ -268,14 +137,8 @@ function moveCell(src_id, dest_id){
             var success = movePieceFromStandBy(src_index, dest_row - 1, dest_col - 1);
             if(success){
                 drawPiece(dest_row, dest_col);
-                if(first_move){
-                    let id = stand_by_first_id;
-                    drawStandBy(id, stand_by_first_side);
-                } else {
-                    let id = stand_by_second_id;
-                    drawStandBy(id, stand_by_second_side);
-                }
-                first_move = !first_move
+                drawStandBy(stand_by_id[current_move], stand_by_pieces[current_move]);
+                current_move = reverseSide(current_move);
             }
             break;
         default:
@@ -285,27 +148,29 @@ function moveCell(src_id, dest_id){
             if(success){
                 drawPiece(src_row, src_col);
                 drawPiece(dest_row, dest_col);
-                if(first_move){
-                    let id = stand_by_first_id;
-                    stand_by_first_side.sort(comparePiece);
-                    drawStandBy(id, stand_by_first_side);
-                } else {
-                    let id = stand_by_second_id;
-                    stand_by_second_side.sort(comparePiece);
-                    drawStandBy(id, stand_by_second_side);
-                }
-                first_move = !first_move
+                stand_by_pieces[current_move].sort(comparePiece);
+                drawStandBy(stand_by_id[current_move], stand_by_pieces[current_move]);
+                current_move = reverseSide(current_move);
             }
     }
     selected_piece = ""
 }
+
+function imageSource(piece){
+    if(piece.promoted){
+        return piece_info[piece.type]["img"][piece.side + "_promoted"];
+    } else {
+        return piece_info[piece.type]["img"][piece.side];
+    }
+}
+
 
 function drawStandBy(id, stand_by_array){
     var div = document.getElementById(id);
     removeAllChildlen(div);
     stand_by_array.forEach(function(p){
         var img = document.createElement('img');
-        img.src = p.img;
+        img.src = imageSource(p);
         img.height = piece_height;
         img.width = piece_width;
         img.addEventListener("click", clickPiece);
@@ -335,7 +200,7 @@ function drawPiece(x, y){
         addClickEventOnEmptyCell(x, y);
     } else {
         var img = document.createElement('img');
-        img.src = piece.img;
+        img.src = imageSource(piece);
 
         img.height = piece_height;
         img.width = piece_width;
@@ -366,12 +231,10 @@ function draw(){
 
 function startGame(table){
     selected_piece = "";
-    stand_by_first_side = [];
-    stand_by_second_side = [];
+    stand_by_pieces = { "first": [], "second": [] };
     resetBoard();
     initializeBoard();
     draw();
-    first_move = true;
+    current_move = "first";
 }
-
 

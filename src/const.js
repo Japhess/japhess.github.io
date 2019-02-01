@@ -56,28 +56,19 @@ let piece_info = { fu: { img: { first: "./img/Sfu.png",
                          },
 };
 
-let stand_by_first_id = "stand_by_pieces_first_side";
-let stand_by_second_id = "stand_by_pieces_second_side";
+var stand_by_id = { first: "stand_by_pieces_first_side",
+                    second: "stand_by_pieces_second_side"
+                  };
 
 class Piece {
-    constructor(first, type, promoted) {
-        this.first = first;
+    constructor(side, type) {
+        this.side = side;
         this.type = type;
-        this.promoted = promoted;
-        if(first){
-            this.img = piece_info[type].img.first;
-        } else {
-            this.img = piece_info[type].img.second;
-        }
+        this.promoted = false;
     }
 
     promote() {
         this.promoted = true;
-        if(this.first){
-            this.img = piece_info[this.type].img.first_promoted;
-        } else {
-            this.img = piece_info[this.type].img.second_promoted;
-        }
         return this;
     }
 }
